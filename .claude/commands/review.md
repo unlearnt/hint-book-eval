@@ -1,9 +1,8 @@
 Run an interactive **human-review session** for recent grader outputs, then optionally trigger the Grader-Improvement Loop.
 
 ## Arguments
-`$ARGUMENTS` format: `[target] [--n N] [--native]`
+`$ARGUMENTS` format: `[--n N] [--native]`
 
-- `target`: `assessment` (default) | `generation`
 - `--n N`: number of recent graded runs to review (default: 10)
 - `--native`: use the native grader (no API key needed) when re-grading runs during review
 
@@ -15,7 +14,7 @@ Parse `$ARGUMENTS`. Set `NATIVE` = true if `--native` was passed.
 
 ### 1. Fetch recent graded runs
 ```bash
-python tools/sample.py --target {target} --status
+python tools/sample.py --target assessment --status
 ```
 Then list the N most recently graded runs from `memory/runs/` (sort by timestamp descending, pick those with a `grade` field).
 
@@ -69,16 +68,16 @@ If yes:
 - Generate a timestamp: `DIAG_OUT=memory/diagnosis-{timestamp}.json`
 
 Spawn a **Grade-Grader** subagent (read `agents/grade-grader.md` as its system prompt):
-- Pass: `TARGET`, `ANNOTATIONS_FILE=memory/annotations-{timestamp}.json`, `DIAGNOSIS_OUT={DIAG_OUT}`
+- Pass: `TARGET=assessment`, `ANNOTATIONS_FILE=memory/annotations-{timestamp}.json`, `DIAGNOSIS_OUT={DIAG_OUT}`
 - Wait for it to write the diagnosis and report back.
 
 If `promote_recommended == true`:
   Spawn a **Grader-Improver** subagent (read `agents/grader-improver.md` as its system prompt):
-  - Pass: `CURRENT_RUBRIC_VERSION=<latest vN>`, `TARGET`, `DIAGNOSIS_FILE={DIAG_OUT}`, `NATIVE={NATIVE}`
+  - Pass: `CURRENT_RUBRIC_VERSION=<latest vN>`, `TARGET=assessment`, `DIAGNOSIS_FILE={DIAG_OUT}`, `NATIVE={NATIVE}`
   - Wait for it to report back.
   - Print whether the rubric was promoted and the new version if so.
 
-Print: "Run `/status {target}` to see the updated rubric."
+Print: "Run `/status` to see the updated rubric."
 
 ---
 
@@ -87,5 +86,5 @@ Print: "Run `/status {target}` to see the updated rubric."
 With `--native`, if runs in the review set have no `grade` field (they were run natively but not yet graded), you may grade them during review:
 
 Spawn a **Grader (native)** subagent — read `agents/grader-native.md` as its system prompt:
-- Pass: `RUN_ID`, `CASE_ID`, `RUBRIC_VERSION=<latest vN>`, `TARGET`
+- Pass: `RUN_ID`, `CASE_ID`, `RUBRIC_VERSION=<latest vN>`, `TARGET=assessment`
 - Then display the returned scores in the review UI above.
