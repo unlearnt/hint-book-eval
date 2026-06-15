@@ -1,5 +1,12 @@
 .env
 memory/runs/
+memory/hint-scores.json
+memory/scores.json
+memory/golden-set.json
+memory/annotations-*.json
+memory/diagnosis-*.json
+hints/
+cases/assessment/
 __pycache__/
 *.pyc
 *.egg-info/
