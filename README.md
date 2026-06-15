@@ -18,22 +18,32 @@ Then in the Claude Code session:
 /run-loop generation --native
 ```
 
-That's it. The pipeline samples generation test cases, runs them as Claude, grades them as Claude, and writes an improved prompt when scores are below threshold — all without any API keys.
+That's it. The pipeline samples generation test cases, generates hint pages as Claude, evaluates every hint's citation accuracy as Claude, and writes an improved prompt when scores fall below threshold — all without any API keys.
+
+Once the generation prompt converges, produce a production hint page:
+
+```
+/generate-hints "California Driver License Gen 3 Real ID" --save
+```
 
 ---
 
 ## How it works
 
-Two loops, each with a different trigger:
+Three commands, two loops:
 
-| Loop | Command | Trigger |
-|---|---|---|
-| **Prompt-Improvement** | `/run-loop` | Automatic — runs until patience or max-tries |
-| **Grader-Improvement** | `/review` | Human-gated — you annotate, then approve |
+| Command | What it does |
+|---|---|
+| `/run-loop generation` | Optimize the **hint generation prompt** — generates hint pages across doc types, grades every hint's citation accuracy, improves `prompts/generation/vN.md` until convergence |
+| `/run-loop assessment` | Optimize the **assessment prompt** — runs against document images, grades output against the rubric, improves `prompts/assessment/vN.md` |
+| `/generate-hints` | **Production** — use the best generation prompt to produce a specific hint page with citations, evaluate it, and save to `hints/` |
+| `/review` | **Human-gated grader improvement** — annotate grader mistakes, propose a new rubric, validate against golden set |
 
-Each iteration of `/run-loop`: sample cases → run → grade → if avg < 80, improve the prompt → repeat.
+**Generation loop** (citation-based): sample doc types → generate hint page with citations → evaluate every hint against its citation → if avg quality < 80, improve generation prompt → repeat.
 
-The loops alternate: the grader is frozen while improving prompts, and prompts are frozen while improving the grader.
+**Assessment loop** (rubric-based): sample image cases → run assessment → grade output → if avg < 80, improve assessment prompt → repeat.
+
+Once `/run-loop generation` converges, run `/generate-hints <doc_type> --save` to produce production-ready hint pages using the optimized prompt. Assessment cases then use those saved hint pages.
 
 ---
 

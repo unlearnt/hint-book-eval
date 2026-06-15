@@ -15,6 +15,8 @@ Generate a forensic hint page for a document type with per-hint citations, then 
 
 Parse `$ARGUMENTS`. Set defaults.
 
+Find the latest generation prompt version in `prompts/generation/` — this is the prompt that `/run-loop generation` has been optimizing. Use it for generation.
+
 ### 1. Generate the hint page
 
 Choose a `HINT_ID` from `--id` if provided, otherwise derive from `doc_type` (snake_case).
