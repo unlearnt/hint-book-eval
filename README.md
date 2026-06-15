@@ -20,7 +20,7 @@ Then in the Claude Code session, generate your first hint page:
 /generate-hints "California Driver License Gen 3 Real ID"
 ```
 
-This runs three lean agents in sequence — generate → grade → improve — until the hint page passes the quality threshold. Each version and its score are logged locally.
+This runs four single-purpose agents — generate → grade → patch or improve → repeat — until the hint page passes the quality threshold with zero inaccurate hints. Each version and its score are logged locally.
 
 ---
 
@@ -32,7 +32,7 @@ The pipeline has two independent flows:
 
 Produces a forensic hint page for a specific document type. Hints are image-checkable only — every check must be answerable from a scanned or photographed front/back image. Physical checks (card thickness, tilt effects, UV features, laser perforation) are excluded.
 
-Three single-purpose agents run back to back, each doing one job and exiting:
+Four single-purpose agents, each doing one job and exiting:
 
 ```
 /generate-hints "California Driver License Gen 3 Real ID"
@@ -141,7 +141,7 @@ Generate a hint page for a document type. Searches authoritative sources online,
 | `doc_type` | required | Document description (e.g. `"Florida Driver License"`) |
 | `--id` | derived | Override the snake_case hint ID |
 | `--threshold N` | `80` | Quality score (0–100) needed to stop |
-| `--max-revisions N` | `3` | Max prompt improvement rounds |
+| `--max-revisions N` | `5` | Max fix rounds (patch + improve combined) |
 
 Promotion requires score ≥ threshold **and** zero inaccurate hints. If both conditions aren't met, the loop continues improving.
 
@@ -190,7 +190,7 @@ Wizard to add an assessment case. Asks for a case ID, the hint page ID to use (m
 │   └── add-case.md                #   /add-case
 │
 ├── agents/
-│   │   # Hint generation (3 single-purpose agents)
+│   │   # Hint generation (4 single-purpose agents)
 │   ├── hintbook-generator-agent.md          #   search web → generate hint page with real citations
 │   ├── hintbook-generator-grader-agent.md   #   fetch cited sources → verify every claim online
 │   ├── hintbook-generator-patcher-agent.md  #   fix only inaccurate hints in-place (fast)
