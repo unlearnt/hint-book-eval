@@ -52,7 +52,7 @@ Physical/tactile hints that are NOT checkable from a scan:
 
 Mark any such hint as `physical` — it fails image_checkability regardless of citation quality.
 
-UV features are NOT physical — they require a UV scanner but not manipulation. Do not penalise them.
+UV features are also penalised — they require a UV lamp or UV-capable scanner, which is not standard equipment.
 
 **Citation presence**: does `citation` exist with non-empty `source` and `quote`?
 

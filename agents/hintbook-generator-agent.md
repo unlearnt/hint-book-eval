@@ -83,7 +83,7 @@ Do NOT write hints for:
 - Delamination or edge smoothness (tactile)
 - Anything requiring bending, flexing, or physically manipulating the card
 
-UV features are allowed — they require a UV scanner, not physical manipulation. Frame them as "under UV light".
+UV features are also excluded — they require a UV lamp or UV-capable scanner, which is not standard equipment.
 
 Write the output:
 ```bash
