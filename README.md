@@ -2,6 +2,8 @@
 
 Agentic prompt evaluation and optimization for the [HintBook](../hintbook-app) document forensics app. Runs entirely inside Claude Code — no external API keys required.
 
+This repo is **source-only**. Hint pages, assessment cases, and memory files are gitignored — every user starts fresh and generates their own data.
+
 ---
 
 ## Quick start
@@ -18,7 +20,7 @@ Then in the Claude Code session, generate your first hint page:
 /generate-hints "California Driver License Gen 3 Real ID"
 ```
 
-This runs three lean agents in sequence — generate → grade → improve — until the hint page's citation quality passes the threshold. Each version and its score are logged automatically.
+This runs three lean agents in sequence — generate → grade → improve — until the hint page passes the quality threshold. Each version and its score are logged locally.
 
 ---
 
@@ -28,7 +30,9 @@ The pipeline has two independent flows:
 
 ### Flow 1 — Hint page generation (`/generate-hints`)
 
-Produces a forensic hint page for a specific document type. Runs three single-purpose agents back to back, each doing one job and exiting:
+Produces a forensic hint page for a specific document type. Hints are image-checkable only — every check must be answerable from a scanned or photographed front/back image. Physical checks (card thickness, tilt effects, UV features, laser perforation) are excluded.
+
+Three single-purpose agents run back to back, each doing one job and exiting:
 
 ```
 /generate-hints "California Driver License Gen 3 Real ID"
@@ -41,17 +45,17 @@ Produces a forensic hint page for a specific document type. Runs three single-pu
       hintbook-generator-grader-agent
         → independently fetches each cited source
         → cross-checks every claim against the live page
-        score=72.5  failed=12
+        score=72.5  inaccurate=4  → below threshold, continuing
 
 [v2]  hintbook-generator-improver-agent  →  fixes root cause in prompt
-      hintbook-generator-agent     →  regenerates with improved prompt
-      hintbook-generator-grader-agent  →  re-grades
-      score=84.0  ✓ threshold met  →  saved to hints/ca_dl.json
+      hintbook-generator-agent           →  regenerates with improved prompt
+      hintbook-generator-grader-agent    →  re-grades
+        score=84.0  inaccurate=0  ✓  →  promoted to hints/ca_dl.json
 ```
 
-Every version is saved (`hints/ca_dl-v1.json`, `hints/ca_dl-v2.json`). Scores are logged to `memory/hint-scores.json`. The version that passes is promoted to `hints/ca_dl.json`.
+Promotion requires **both**: score ≥ threshold **and** zero inaccurate hints. A version that passes the score but still has inaccurate citations keeps improving.
 
-Citations are grounded in real sources — the generator fetches pages before writing hints, and the grader independently re-fetches the same sources to verify each claim. Neither agent relies solely on training data.
+Every version is saved locally (`hints/ca_dl-v1.json`, `hints/ca_dl-v2.json`). Scores are logged to `memory/hint-scores.json`. Neither is committed to git.
 
 ### Flow 2 — Assessment prompt optimization (`/run-loop`)
 
@@ -64,8 +68,7 @@ Once you have hint pages and real document images, optimize the assessment promp
 ```
 iteration 1:  sample cases → run assessment → grade output → score=68.2
               → improve prompts/assessment/v1.md → v2
-iteration 2:  score=79.1
-              → improve → v3
+iteration 2:  score=79.1  → improve → v3
 iteration 3:  score=83.5  ✓ threshold met
 ```
 
@@ -74,7 +77,7 @@ iteration 3:  score=83.5  ✓ threshold met
 After runs accumulate, annotate grader mistakes and optionally upgrade the rubric:
 
 ```
-/review assessment --native
+/review --native
 ```
 
 ---
@@ -123,7 +126,7 @@ RUNNER_PROVIDER=deepinfra
 
 ### `/generate-hints <doc_type> [options]`
 
-Generate a hint page for a document type. Runs the three hint-generation agents in sequence, improving the prompt between rounds until quality passes the threshold.
+Generate a hint page for a document type. Searches authoritative sources online, generates hints with real citations, grades every claim against the fetched source, and improves the prompt if needed.
 
 | Argument | Default | Description |
 |---|---|---|
@@ -132,7 +135,7 @@ Generate a hint page for a document type. Runs the three hint-generation agents 
 | `--threshold N` | `80` | Quality score (0–100) needed to stop |
 | `--max-revisions N` | `3` | Max prompt improvement rounds |
 
-Each round: generate → grade → if score < threshold, improve prompt → next round. Versions increment (`v1`, `v2`, …), scores are logged, and the passing version is promoted to `hints/{id}.json`.
+Promotion requires score ≥ threshold **and** zero inaccurate hints. If both conditions aren't met, the loop continues improving.
 
 ### `/run-loop [options]`
 
@@ -223,27 +226,20 @@ Wizard to add an assessment case. Asks for a case ID, the hint page ID to use (m
 │   ├── assessment/v1.md           #   initial assessment prompt
 │   └── generation/
 │       ├── v1.md                  #   initial generation prompt
-│       └── v2.md                  #   citation-aware generation prompt (current)
+│       ├── v2.md                  #   citation-aware generation prompt
+│       └── v3.md                  #   image-checkable hints only (current)
 │
 ├── rubrics/
 │   ├── assessment/v1.md           #   4-criterion assessment rubric (100 pts)
 │   └── generation/
 │       ├── v1.md                  #   structural rubric (superseded)
-│       └── v2.md                  #   citation-quality rubric (current)
+│       ├── v2.md                  #   citation-quality rubric (superseded)
+│       └── v3.md                  #   adds image_checkability criterion (current)
 │
-├── hints/
-│   ├── ca_dl.json                 #   California DL — canonical (promoted version)
-│   ├── ca_dl-v1.json              #   California DL — version history
-│   └── ca_dl-v2.json              #   ...
+├── hints/                         #   gitignored — generated locally per user
+├── cases/assessment/              #   gitignored — user-specific cases with local image paths
 │
-├── cases/
-│   └── assessment/                #   assessment cases (require document images)
-│
-├── memory/
-│   ├── runs/                      #   assessment run + grade files (gitignored)
-│   ├── scores.json                #   assessment score history per case
-│   ├── hint-scores.json           #   hint generation score history per version
-│   └── golden-set.json            #   human-verified anchor cases for rubric validation
+├── memory/                        #   gitignored — all runtime logs and run files
 │
 ├── .env.example
 ├── .gitignore
@@ -257,7 +253,7 @@ Wizard to add an assessment case. Asks for a case ID, the hint page ID to use (m
 ```
 # 1. Generate and refine a hint page (no images needed)
 /generate-hints "California Driver License Gen 3 Real ID"
-# → produces hints/ca_dl.json
+# → produces hints/ca_dl.json locally (gitignored)
 
 # 2. Repeat for other document types
 /generate-hints "Florida Driver License"
@@ -293,6 +289,5 @@ Wizard to add an assessment case. Asks for a case ID, the hint page ID to use (m
 |---|---|
 | New document type | `/generate-hints "<doc_type>"` |
 | New assessment case | `/add-case` |
-| New prompt target | Add `prompts/{target}/v1.md`, `rubrics/{target}/v1.md`, `cases/{target}/` |
-| Change quality threshold | Pass `--threshold N` to `/generate-hints` or edit `>= 80` in `run-loop.md` |
+| Change quality threshold | Pass `--threshold N` to `/generate-hints` |
 | Change case sampling | Edit the 20/40/40 weights in `tools/sample.py` |
