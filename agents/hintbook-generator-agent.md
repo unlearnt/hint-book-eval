@@ -72,6 +72,19 @@ Where `citation` is:
 - If no fetchable source exists for a hint, include the citation with `"quote": ""` and note in `note` that the claim is based on general AAMVA compliance requirements.
 - No hint may be missing its `citation` object entirely.
 
+**Before writing each hint, ask: can this be answered from a flat image scan?**
+
+Do NOT write hints for:
+- Card thickness, rigidity, or weight
+- Raised/embossed/tactile text features
+- Color-shifting ink or OVD tilt effects
+- Hologram color shift when tilted
+- Laser perforation (requires holding to a light source)
+- Delamination or edge smoothness (tactile)
+- Anything requiring bending, flexing, or physically manipulating the card
+
+UV features are allowed — they require a UV scanner, not physical manipulation. Frame them as "under UV light".
+
 Write the output:
 ```bash
 cat > {OUT_FILE} << 'HINTEOF'

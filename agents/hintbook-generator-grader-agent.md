@@ -37,7 +37,22 @@ For sources that are behind paywalls or not publicly accessible (e.g. full AAMVA
 
 ### 3. Evaluate each hint
 
-For each hint `[id, question, note, expect, citation]`:
+For each hint `[id, question, note, expect, citation]`, apply four checks:
+
+**Image checkability**: can this hint be answered from a flat document scan or photograph alone?
+
+Physical/tactile hints that are NOT checkable from a scan:
+- Card thickness, rigidity, weight
+- Raised or embossed text (tactile)
+- Color-shifting ink / OVD tilt effects (require physical tilting)
+- Hologram color shift (requires tilting)
+- Laser perforation (requires holding to a light source)
+- Delamination or layer separation (tactile)
+- Edge smoothness or card cut quality (tactile)
+
+Mark any such hint as `physical` — it fails image_checkability regardless of citation quality.
+
+UV features are NOT physical — they require a UV scanner but not manipulation. Do not penalise them.
 
 **Citation presence**: does `citation` exist with non-empty `source` and `quote`?
 
@@ -62,11 +77,12 @@ If you cannot fetch a source at all (paywall, 404, etc.), fall back to your know
 ### 4. Compute scores
 
 ```
-citation_presence    = (hints_with_citation / total) × 25
-citation_specificity = (hints_with_specific_source / total) × 25
-claim_accuracy       = (accurate×2 + plausible×1) / (total×2) × 40
+citation_presence    = (hints_with_citation / total) × 20
+citation_specificity = (hints_with_specific_source / total) × 20
+claim_accuracy       = (accurate×2 + plausible×1) / (total×2) × 35
+image_checkability   = 15 if physical_count==0 else 10 if ≤2 else 5 if ≤5 else 0
 structure_compliance = section_check(8–13) + hint_count_check(≥50) + crossfield_check(≥6 AAMVA codes)
-quality_score        = sum of all four criterion scores
+quality_score        = sum of all five criterion scores
 ```
 
 ### 5. Write feedback
@@ -78,9 +94,10 @@ cat > {FEEDBACK_OUT} << 'FBEOF'
   "hint_version": "...",
   "quality_score": 0.0,
   "criterion_scores": {
-    "citation_presence":    {"score": 0, "max": 25, "detail": "X/Y hints have citations"},
-    "citation_specificity": {"score": 0, "max": 25, "detail": "X/Y cite a named standard"},
-    "claim_accuracy":       {"score": 0, "max": 40, "detail": "X accurate, Y plausible, Z failed"},
+    "citation_presence":    {"score": 0, "max": 20, "detail": "X/Y hints have citations"},
+    "citation_specificity": {"score": 0, "max": 20, "detail": "X/Y cite a named standard"},
+    "claim_accuracy":       {"score": 0, "max": 35, "detail": "X accurate, Y plausible, Z failed"},
+    "image_checkability":   {"score": 0, "max": 15, "detail": "X physical hints found", "physical_hints": []},
     "structure_compliance": {"score": 0, "max": 10, "detail": "..."}
   },
   "accurate": 0,
