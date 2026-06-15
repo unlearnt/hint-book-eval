@@ -155,9 +155,9 @@ For each run: shows output + grader scores → mark Correct / Incorrect / Partia
 
 Print pipeline state: prompt version table, rubric versions, per-case score history, hint-scores log, golden set size, and health warnings.
 
-### `/add-case [target]`
+### `/add-case`
 
-Wizard to add a test case. Generation cases need only a `doc_type` string. Assessment cases need image paths, a hint page ID, and a ground-truth verdict. Cases start with `"enabled": false`.
+Wizard to add an assessment case. Asks for a case ID, the hint page ID to use (must already exist in `hints/`), image paths, and a ground-truth verdict. The case is saved with `"enabled": false` — open the file and flip it to `true` once you've verified the image paths.
 
 ---
 
@@ -251,22 +251,31 @@ Wizard to add a test case. Generation cases need only a `doc_type` string. Asses
 ```
 # 1. Generate and refine a hint page (no images needed)
 /generate-hints "California Driver License Gen 3 Real ID"
+# → produces hints/ca_dl.json
 
-# 2. Generate more hint pages for other document types
+# 2. Repeat for other document types
 /generate-hints "Florida Driver License"
 /generate-hints "US Passport Book 2021"
 
-# 3. Add assessment cases (requires real document images)
-/add-case assessment
-# edit the case file and set "enabled": true
+# 3. Place your document images somewhere under the project root
+#    e.g. data/images/ca_dl_front.jpg, data/images/ca_dl_back.jpg
 
-# 4. Optimize the assessment prompt against real documents
+# 4. Add an assessment case linking an image to a hint page
+/add-case
+# The wizard asks for:
+#   - case_id          e.g. ca-dl-genuine-001
+#   - hint_page_id     e.g. ca_dl  (matches hints/ca_dl.json)
+#   - image_paths      e.g. data/images/ca_dl_front.jpg
+#   - ground_truth     genuine / forged + expected verdict
+# Then open cases/assessment/{case_id}.json and set "enabled": true
+
+# 5. Optimize the assessment prompt against your cases
 /run-loop --native
 
-# 5. Review grader quality and seed the golden set
+# 6. Review grader quality and seed the golden set
 /review --native --n 10
 
-# 6. Check overall pipeline state
+# 7. Check overall pipeline state
 /status
 ```
 
