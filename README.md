@@ -47,12 +47,12 @@ Produces a forensic hint page for a specific document type. Runs three single-pu
 
 Every version is saved (`hints/ca_dl-v1.json`, `hints/ca_dl-v2.json`). Scores are logged to `memory/hint-scores.json`. The version that passes is promoted to `hints/ca_dl.json`.
 
-### Flow 2 — Assessment prompt optimization (`/run-loop assessment`)
+### Flow 2 — Assessment prompt optimization (`/run-loop`)
 
 Once you have hint pages and real document images, optimize the assessment prompt:
 
 ```
-/run-loop assessment --native
+/run-loop --native
 ```
 
 ```
@@ -82,8 +82,8 @@ All agents run inside Claude Code itself — no external calls, no keys required
 `/generate-hints` always runs natively. For `/run-loop` and `/review`, pass `--native`:
 
 ```
-/run-loop assessment --native
-/review assessment --native
+/run-loop --native
+/review --native
 ```
 
 ### API — evaluate external models
@@ -128,32 +128,30 @@ Generate a hint page for a document type. Runs the three hint-generation agents 
 
 Each round: generate → grade → if score < threshold, improve prompt → next round. Versions increment (`v1`, `v2`, …), scores are logged, and the passing version is promoted to `hints/{id}.json`.
 
-### `/run-loop [target] [options]`
+### `/run-loop [options]`
 
 Autonomous assessment prompt-improvement loop.
 
 | Argument | Default | Description |
 |---|---|---|
-| `target` | `assessment` | `assessment` or `generation` |
 | `--native` | off | Run everything inside Claude Code |
 | `--batch N` | `5` | Cases per iteration |
 | `--patience N` | `3` | Stop after N rounds without improvement |
 | `--max-tries N` | `10` | Hard cap on total iterations |
 | `--dry-run` | — | Print steps without running any model |
 
-### `/review [target] [options]`
+### `/review [options]`
 
 Human-review session for grader outputs, with optional rubric upgrade.
 
 | Argument | Default | Description |
 |---|---|---|
-| `target` | `assessment` | `assessment` or `generation` |
 | `--n N` | `10` | Recent graded runs to show |
 | `--native` | off | Use native grader for unscored runs |
 
 For each run: shows output + grader scores → mark Correct / Incorrect / Partial / Skip → optionally add to golden set. If ≥ 3 incorrect: Grade-Grader diagnosis → Grader-Improver → golden-set validation gate → promote new rubric.
 
-### `/status [target]`
+### `/status`
 
 Print pipeline state: prompt version table, rubric versions, per-case score history, hint-scores log, golden set size, and health warnings.
 
@@ -233,8 +231,7 @@ Wizard to add a test case. Generation cases need only a `doc_type` string. Asses
 │   └── ca_dl-v2.json              #   ...
 │
 ├── cases/
-│   ├── assessment/                #   assessment cases (require document images)
-│   └── generation/                #   6 doc-type cases for prompt optimization
+│   └── assessment/                #   assessment cases (require document images)
 │
 ├── memory/
 │   ├── runs/                      #   assessment run + grade files (gitignored)
@@ -264,10 +261,10 @@ Wizard to add a test case. Generation cases need only a `doc_type` string. Asses
 # edit the case file and set "enabled": true
 
 # 4. Optimize the assessment prompt against real documents
-/run-loop assessment --native
+/run-loop --native
 
 # 5. Review grader quality and seed the golden set
-/review assessment --native --n 10
+/review --native --n 10
 
 # 6. Check overall pipeline state
 /status
