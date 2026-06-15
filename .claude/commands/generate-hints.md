@@ -104,7 +104,7 @@ Clean up temp files: `rm {GEN_OUT} {FEED_OUT}` (keep the saved `hints/{HINT_ID}-
 
 ### Step 3 — Check threshold
 
-If `quality_score >= threshold`:
+If `quality_score >= threshold` AND `inaccurate == 0`:
 ```bash
 python tools/save_hint_version.py \
   --hint-file hints/{HINT_ID}-{HINT_VERSION}.json \
@@ -114,15 +114,26 @@ python tools/save_hint_version.py \
 ```
 Print:
 ```
-✓ Quality threshold met ({quality_score:.1f} ≥ {threshold})
+✓ Quality threshold met ({quality_score:.1f} ≥ {threshold}, 0 inaccurate)
 ✓ Promoted hints/{HINT_ID}-{HINT_VERSION}.json → hints/{HINT_ID}.json
 ```
 Go to **Final report**.
+
+If `quality_score >= threshold` AND `inaccurate > 0`:
+Print:
+```
+⚠ Score {quality_score:.1f} ≥ {threshold} but {inaccurate} inaccurate hint(s) remain — continuing.
+```
+Do NOT promote. Continue to Step 4 (improve).
 
 If `REVISION >= max-revisions`:
 Print:
 ```
 Max revisions reached. Best version: {BEST_HINT_VERSION} ({BEST_SCORE:.1f})
+```
+If the best version has `inaccurate > 0`, warn:
+```
+⚠ Best version still has inaccurate hints. Review hints/{HINT_ID}-{BEST_HINT_VERSION}.json before promoting.
 ```
 Ask: `"Promote hints/{HINT_ID}-{BEST_HINT_VERSION}.json as canonical? [Y/n]"`
 If Y: run save_hint_version.py with `--promote` on the best version.
