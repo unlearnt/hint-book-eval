@@ -12,66 +12,87 @@ cd hintbook-eval-pipeline-cc
 claude
 ```
 
-Then in the Claude Code session:
+Then in the Claude Code session, generate your first hint page:
 
 ```
-/run-loop generation --native
+/generate-hints "California Driver License Gen 3 Real ID"
 ```
 
-That's it. The pipeline samples generation test cases, generates hint pages as Claude, evaluates every hint's citation accuracy as Claude, and writes an improved prompt when scores fall below threshold — all without any API keys.
-
-Once the generation prompt converges, produce a production hint page:
-
-```
-/generate-hints "California Driver License Gen 3 Real ID" --save
-```
+This runs three lean agents in sequence — generate → grade → improve — until the hint page's citation quality passes the threshold. Each version and its score are logged automatically.
 
 ---
 
 ## How it works
 
-Three commands, two loops:
+The pipeline has two independent flows:
 
-| Command | What it does |
-|---|---|
-| `/run-loop generation` | Optimize the **hint generation prompt** — generates hint pages across doc types, grades every hint's citation accuracy, improves `prompts/generation/vN.md` until convergence |
-| `/run-loop assessment` | Optimize the **assessment prompt** — runs against document images, grades output against the rubric, improves `prompts/assessment/vN.md` |
-| `/generate-hints` | **Production** — use the best generation prompt to produce a specific hint page with citations, evaluate it, and save to `hints/` |
-| `/review` | **Human-gated grader improvement** — annotate grader mistakes, propose a new rubric, validate against golden set |
+### Flow 1 — Hint page generation (`/generate-hints`)
 
-**Generation loop** (citation-based): sample doc types → generate hint page with citations → evaluate every hint against its citation → if avg quality < 80, improve generation prompt → repeat.
+Produces a forensic hint page for a specific document type. Runs three single-purpose agents back to back, each doing one job and exiting:
 
-**Assessment loop** (rubric-based): sample image cases → run assessment → grade output → if avg < 80, improve assessment prompt → repeat.
+```
+/generate-hints "California Driver License Gen 3 Real ID"
+```
 
-Once `/run-loop generation` converges, run `/generate-hints <doc_type> --save` to produce production-ready hint pages using the optimized prompt. Assessment cases then use those saved hint pages.
+```
+[v1]  hintbook-generator-agent     →  generates hint page with citations
+      hintbook-generator-grader-agent  →  grades every hint against its citation
+      score=72.5  failed=12
+
+[v2]  hintbook-generator-improver-agent  →  fixes root cause in prompt
+      hintbook-generator-agent     →  regenerates with improved prompt
+      hintbook-generator-grader-agent  →  re-grades
+      score=84.0  ✓ threshold met  →  saved to hints/ca_dl.json
+```
+
+Every version is saved (`hints/ca_dl-v1.json`, `hints/ca_dl-v2.json`). Scores are logged to `memory/hint-scores.json`. The version that passes is promoted to `hints/ca_dl.json`.
+
+### Flow 2 — Assessment prompt optimization (`/run-loop assessment`)
+
+Once you have hint pages and real document images, optimize the assessment prompt:
+
+```
+/run-loop assessment --native
+```
+
+```
+iteration 1:  sample cases → run assessment → grade output → score=68.2
+              → improve prompts/assessment/v1.md → v2
+iteration 2:  score=79.1
+              → improve → v3
+iteration 3:  score=83.5  ✓ threshold met
+```
+
+### Human review (`/review`)
+
+After runs accumulate, annotate grader mistakes and optionally upgrade the rubric:
+
+```
+/review assessment --native
+```
 
 ---
 
 ## Modes
 
-### Native (default recommendation) — no API keys
+### Native — no API keys needed (recommended)
 
-Pass `--native` and all inference runs inside Claude Code itself. The spawned subagents **are** Claude — no external calls, no keys.
+All agents run inside Claude Code itself — no external calls, no keys required.
+
+`/generate-hints` always runs natively. For `/run-loop` and `/review`, pass `--native`:
 
 ```
-/run-loop generation --native
 /run-loop assessment --native
-/review generation --native
+/review assessment --native
 ```
-
-Internally, `--native` routes to a different set of agent files (`agents/*-native.md`) that do the work themselves, and thin persistence tools (`save_run.py`, `save_grade.py`, `save_prompt.py`) that only handle file I/O.
 
 ### API — evaluate external models
 
-Without `--native`, each role calls a configurable LLM provider. Useful when you want to evaluate a non-Claude model (e.g. Llama on DeepInfra) as the runner while Claude grades it.
+Without `--native`, each role calls a configurable LLM provider. Useful for evaluating a non-Claude model (e.g. Llama on DeepInfra) as the runner.
 
 ```bash
 cp .env.example .env
 # fill in ANTHROPIC_API_KEY, DEEPINFRA_API_KEY
-```
-
-```
-/run-loop generation
 ```
 
 Default model assignments:
@@ -84,21 +105,32 @@ Default model assignments:
 | Grader-Improver | `claude-opus-4-7` | Anthropic |
 | Grade-Grader | `claude-sonnet-4-6` | Anthropic |
 
-Override any role in `.env`:
-
+Override in `.env`:
 ```env
 RUNNER_MODEL=anthropic/meta-llama/Llama-3.3-70B-Instruct
 RUNNER_PROVIDER=deepinfra
-IMPROVER_MODEL=claude-opus-4-8
 ```
 
 ---
 
 ## Slash commands
 
+### `/generate-hints <doc_type> [options]`
+
+Generate a hint page for a document type. Runs the three hint-generation agents in sequence, improving the prompt between rounds until quality passes the threshold.
+
+| Argument | Default | Description |
+|---|---|---|
+| `doc_type` | required | Document description (e.g. `"Florida Driver License"`) |
+| `--id` | derived | Override the snake_case hint ID |
+| `--threshold N` | `80` | Quality score (0–100) needed to stop |
+| `--max-revisions N` | `3` | Max prompt improvement rounds |
+
+Each round: generate → grade → if score < threshold, improve prompt → next round. Versions increment (`v1`, `v2`, …), scores are logged, and the passing version is promoted to `hints/{id}.json`.
+
 ### `/run-loop [target] [options]`
 
-Autonomous prompt-improvement loop.
+Autonomous assessment prompt-improvement loop.
 
 | Argument | Default | Description |
 |---|---|---|
@@ -111,23 +143,23 @@ Autonomous prompt-improvement loop.
 
 ### `/review [target] [options]`
 
-Human-review session for grader outputs, with optional grader upgrade.
+Human-review session for grader outputs, with optional rubric upgrade.
 
 | Argument | Default | Description |
 |---|---|---|
 | `target` | `assessment` | `assessment` or `generation` |
 | `--n N` | `10` | Recent graded runs to show |
-| `--native` | off | Use native grader for any unscored runs |
+| `--native` | off | Use native grader for unscored runs |
 
-For each run: shows model output + grader scores → you mark Correct / Incorrect / Partial / Skip → optionally add to golden set. If ≥ 3 incorrect: offers to run the Grader-Improvement Loop (Grade-Grader diagnosis → Grader-Improver → golden-set validation gate → promote).
+For each run: shows output + grader scores → mark Correct / Incorrect / Partial / Skip → optionally add to golden set. If ≥ 3 incorrect: Grade-Grader diagnosis → Grader-Improver → golden-set validation gate → promote new rubric.
 
 ### `/status [target]`
 
-Print pipeline state: prompt version table (with best score marked ◀), rubric version table, per-case score history, golden set size, and health warnings.
+Print pipeline state: prompt version table, rubric versions, per-case score history, hint-scores log, golden set size, and health warnings.
 
 ### `/add-case [target]`
 
-Wizard to add a test case. Generation cases need only a document type string. Assessment cases need image paths, a hint page ID, and a ground-truth verdict. Cases start disabled — set `"enabled": true` in the file when ready.
+Wizard to add a test case. Generation cases need only a `doc_type` string. Assessment cases need image paths, a hint page ID, and a ground-truth verdict. Cases start with `"enabled": false`.
 
 ---
 
@@ -135,58 +167,80 @@ Wizard to add a test case. Generation cases need only a document type string. As
 
 ```
 .
-├── .claude/commands/              # Slash commands (loaded by Claude Code)
+├── .claude/commands/
+│   ├── generate-hints.md          #   /generate-hints
 │   ├── run-loop.md                #   /run-loop
 │   ├── review.md                  #   /review
 │   ├── status.md                  #   /status
 │   └── add-case.md                #   /add-case
 │
-├── agents/                        # Subagent system-prompt definitions
-│   ├── runner.md                  #   API mode runner
-│   ├── runner-native.md           #   Native mode runner (generates output as Claude)
-│   ├── grader.md                  #   API mode grader
-│   ├── grader-native.md           #   Native mode grader (scores as Claude)
-│   ├── prompt-improver.md         #   API mode prompt-improver
-│   ├── prompt-improver-native.md  #   Native mode prompt-improver (writes prompt as Claude)
-│   ├── grade-grader.md            #   Audits grader quality, writes diagnosis JSON
-│   └── grader-improver.md         #   Proposes and validates new rubric versions
+├── agents/
+│   │   # Hint generation (3 single-purpose agents)
+│   ├── hintbook-generator-agent.md          #   generate hint page with citations
+│   ├── hintbook-generator-grader-agent.md   #   grade every hint against its citation
+│   ├── hintbook-generator-improver-agent.md #   improve generation prompt from feedback
+│   │
+│   │   # Assessment loop — native mode
+│   ├── runner-native.md           #   run assessment case as Claude
+│   ├── grader-native.md           #   grade assessment output as Claude
+│   ├── prompt-improver-native.md  #   improve assessment prompt as Claude
+│   │
+│   │   # Assessment loop — API mode
+│   ├── runner.md
+│   ├── grader.md
+│   ├── prompt-improver.md
+│   │
+│   │   # Grader improvement (human-gated)
+│   ├── grade-grader.md            #   audit grader quality, write diagnosis
+│   └── grader-improver.md         #   propose and validate new rubric
 │
 ├── tools/
-│   ├── common.py                  #   Shared utilities — LLM calls, file I/O, versioning
+│   ├── common.py                  #   shared utilities — LLM calls, file I/O, versioning
 │   │
-│   │   # API-mode tools (call external LLMs)
-│   ├── run_case.py                #   Run one case via API
-│   ├── grade.py                   #   Grade a stored run via API
-│   ├── improve_prompt.py          #   Generate next prompt version via API
-│   ├── improve_grader.py          #   Generate + validate next rubric via API
+│   │   # Hint generation tools
+│   ├── save_hint_version.py       #   save hints/{id}-{vN}.json; --promote writes canonical
+│   ├── record_hint_score.py       #   append version score to memory/hint-scores.json
 │   │
-│   │   # Native-mode tools (file I/O only, no LLM)
-│   ├── build_messages.py          #   Format a case into the prompt Claude should follow
-│   ├── save_run.py                #   Persist a pre-generated run output
-│   ├── save_grade.py              #   Persist a pre-generated grade + update scores
-│   ├── save_prompt.py             #   Version and save a pre-generated prompt file
+│   │   # Assessment loop — API-mode tools (call external LLMs)
+│   ├── run_case.py
+│   ├── grade.py
+│   ├── improve_prompt.py
+│   ├── improve_grader.py
 │   │
-│   └── sample.py                  #   Sample cases for an iteration (20/40/40 strategy)
+│   │   # Assessment loop — native tools (file I/O only, no LLM)
+│   ├── build_messages.py          #   format a case into the task Claude should perform
+│   ├── save_run.py                #   persist a pre-generated run output
+│   ├── save_grade.py              #   persist a pre-generated grade + update scores
+│   ├── save_prompt.py             #   version and save a pre-generated prompt file
+│   │
+│   └── sample.py                  #   sample cases (20% never-tested, 40% worst, 40% random)
 │
 ├── prompts/
-│   ├── assessment/v1.md           #   Initial assessment prompt
-│   └── generation/v1.md           #   Initial generation prompt
+│   ├── assessment/v1.md           #   initial assessment prompt
+│   └── generation/
+│       ├── v1.md                  #   initial generation prompt
+│       └── v2.md                  #   citation-aware generation prompt (current)
 │
 ├── rubrics/
 │   ├── assessment/v1.md           #   4-criterion assessment rubric (100 pts)
-│   └── generation/v1.md           #   4-criterion generation rubric (100 pts)
+│   └── generation/
+│       ├── v1.md                  #   structural rubric (superseded)
+│       └── v2.md                  #   citation-quality rubric (current)
 │
 ├── hints/
-│   └── ca_dl.json                 #   California DL hint page (14 sections, 56 checks)
+│   ├── ca_dl.json                 #   California DL — canonical (promoted version)
+│   ├── ca_dl-v1.json              #   California DL — version history
+│   └── ca_dl-v2.json              #   ...
 │
 ├── cases/
-│   ├── assessment/                #   Assessment cases (require document images)
-│   └── generation/                #   6 generation cases — ready to run, no images needed
+│   ├── assessment/                #   assessment cases (require document images)
+│   └── generation/                #   6 doc-type cases for prompt optimization
 │
 ├── memory/
-│   ├── runs/                      #   Run + grade JSON files (gitignored)
-│   ├── scores.json                #   Score history per case
-│   └── golden-set.json            #   Human-verified anchor cases for rubric validation
+│   ├── runs/                      #   assessment run + grade files (gitignored)
+│   ├── scores.json                #   assessment score history per case
+│   ├── hint-scores.json           #   hint generation score history per version
+│   └── golden-set.json            #   human-verified anchor cases for rubric validation
 │
 ├── .env.example
 ├── .gitignore
@@ -195,20 +249,29 @@ Wizard to add a test case. Generation cases need only a document type string. As
 
 ---
 
-## Included test cases
+## Typical workflow
 
-Six **generation** cases ship enabled and ready to run — no images required:
+```
+# 1. Generate and refine a hint page (no images needed)
+/generate-hints "California Driver License Gen 3 Real ID"
 
-| Case ID | Document |
-|---|---|
-| `ca-dl-gen` | California Driver License (Gen 3, Real ID) |
-| `fl-dl-gen` | Florida Driver License |
-| `tx-dl-gen` | Texas Driver License |
-| `ny-dl-gen` | New York Driver License |
-| `us-passport-gen` | US Passport Book (2021) |
-| `us-passport-card-gen` | US Passport Card |
+# 2. Generate more hint pages for other document types
+/generate-hints "Florida Driver License"
+/generate-hints "US Passport Book 2021"
 
-**Assessment** cases need real document images. Add them with `/add-case assessment`.
+# 3. Add assessment cases (requires real document images)
+/add-case assessment
+# edit the case file and set "enabled": true
+
+# 4. Optimize the assessment prompt against real documents
+/run-loop assessment --native
+
+# 5. Review grader quality and seed the golden set
+/review assessment --native --n 10
+
+# 6. Check overall pipeline state
+/status
+```
 
 ---
 
@@ -216,8 +279,8 @@ Six **generation** cases ship enabled and ready to run — no images required:
 
 | What | How |
 |---|---|
-| New document type | `/add-case generation` — enter a doc_type description |
-| New hint page | Create `hints/{id}.json` (follow `hints/ca_dl.json` schema), reference via `hint_page_id` in assessment cases |
-| New prompt target | Add `prompts/{target}/v1.md`, `rubrics/{target}/v1.md`, `cases/{target}/` — tools are target-agnostic |
-| Change pass threshold | Edit the `>= 80` value in `.claude/commands/run-loop.md` |
+| New document type | `/generate-hints "<doc_type>"` |
+| New assessment case | `/add-case assessment` |
+| New prompt target | Add `prompts/{target}/v1.md`, `rubrics/{target}/v1.md`, `cases/{target}/` |
+| Change quality threshold | Pass `--threshold N` to `/generate-hints` or edit `>= 80` in `run-loop.md` |
 | Change case sampling | Edit the 20/40/40 weights in `tools/sample.py` |
