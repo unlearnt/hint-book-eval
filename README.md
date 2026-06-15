@@ -45,15 +45,23 @@ Three single-purpose agents run back to back, each doing one job and exiting:
       hintbook-generator-grader-agent
         → independently fetches each cited source
         → cross-checks every claim against the live page
-        score=72.5  inaccurate=4  → below threshold, continuing
+        score=84.0  inaccurate=4  → inaccurate hints remain
 
-[v2]  hintbook-generator-improver-agent  →  fixes root cause in prompt
-      hintbook-generator-agent           →  regenerates with improved prompt
-      hintbook-generator-grader-agent    →  re-grades
-        score=84.0  inaccurate=0  ✓  →  promoted to hints/ca_dl.json
+[v2]  hintbook-generator-patcher-agent
+        → fixes only the 4 inaccurate hints (looks up correct sources)
+        → all other hints untouched
+      hintbook-generator-grader-agent  →  re-grades everything
+        score=86.0  inaccurate=0  ✓  →  promoted to hints/ca_dl.json
 ```
 
-Promotion requires **both**: score ≥ threshold **and** zero inaccurate hints. A version that passes the score but still has inaccurate citations keeps improving.
+Two types of fixes, each triggered by what the grader finds:
+
+| Condition | Action | Speed |
+|---|---|---|
+| `inaccurate > 0` | **Patcher** — fixes specific wrong hints, leaves everything else alone | Fast |
+| `inaccurate == 0`, score < threshold | **Improver** — rewrites generation prompt, triggers full regeneration | Slower |
+
+Promotion requires **both**: score ≥ threshold **and** zero inaccurate hints.
 
 Every version is saved locally (`hints/ca_dl-v1.json`, `hints/ca_dl-v2.json`). Scores are logged to `memory/hint-scores.json`. Neither is committed to git.
 
@@ -185,7 +193,8 @@ Wizard to add an assessment case. Asks for a case ID, the hint page ID to use (m
 │   │   # Hint generation (3 single-purpose agents)
 │   ├── hintbook-generator-agent.md          #   search web → generate hint page with real citations
 │   ├── hintbook-generator-grader-agent.md   #   fetch cited sources → verify every claim online
-│   ├── hintbook-generator-improver-agent.md #   improve generation prompt from grader feedback
+│   ├── hintbook-generator-patcher-agent.md  #   fix only inaccurate hints in-place (fast)
+│   ├── hintbook-generator-improver-agent.md #   improve generation prompt for systemic issues
 │   │
 │   │   # Assessment loop — native mode
 │   ├── runner-native.md           #   run assessment case as Claude
