@@ -1,0 +1,28 @@
+{
+  "california_driver_license_gen_3_real_id": [
+    {
+      "hint_version": "v1",
+      "prompt_version": "v2",
+      "score": 98.31,
+      "accurate": 54,
+      "plausible": 5,
+      "inaccurate": 0,
+      "unsupported": 0,
+      "missing": 0,
+      "total_hints": 59,
+      "timestamp": "2026-06-15T05:16:43.376536+00:00"
+    },
+    {
+      "hint_version": "v2",
+      "prompt_version": "v2",
+      "score": 89.0,
+      "accurate": 39,
+      "plausible": 12,
+      "inaccurate": 4,
+      "unsupported": 2,
+      "missing": 0,
+      "total_hints": 57,
+      "timestamp": "2026-06-15T08:58:18.833022+00:00"
+    }
+  ]
+}
