@@ -35,9 +35,13 @@ Produces a forensic hint page for a specific document type. Runs three single-pu
 ```
 
 ```
-[v1]  hintbook-generator-agent     →  generates hint page with citations
-      hintbook-generator-grader-agent  →  grades every hint against its citation
-      score=72.5  failed=12
+[v1]  hintbook-generator-agent
+        → searches AAMVA, CFR, DMV pages, ICAO/ISO online
+        → generates hint page citing text actually fetched
+      hintbook-generator-grader-agent
+        → independently fetches each cited source
+        → cross-checks every claim against the live page
+        score=72.5  failed=12
 
 [v2]  hintbook-generator-improver-agent  →  fixes root cause in prompt
       hintbook-generator-agent     →  regenerates with improved prompt
@@ -46,6 +50,8 @@ Produces a forensic hint page for a specific document type. Runs three single-pu
 ```
 
 Every version is saved (`hints/ca_dl-v1.json`, `hints/ca_dl-v2.json`). Scores are logged to `memory/hint-scores.json`. The version that passes is promoted to `hints/ca_dl.json`.
+
+Citations are grounded in real sources — the generator fetches pages before writing hints, and the grader independently re-fetches the same sources to verify each claim. Neither agent relies solely on training data.
 
 ### Flow 2 — Assessment prompt optimization (`/run-loop`)
 
@@ -174,9 +180,9 @@ Wizard to add an assessment case. Asks for a case ID, the hint page ID to use (m
 │
 ├── agents/
 │   │   # Hint generation (3 single-purpose agents)
-│   ├── hintbook-generator-agent.md          #   generate hint page with citations
-│   ├── hintbook-generator-grader-agent.md   #   grade every hint against its citation
-│   ├── hintbook-generator-improver-agent.md #   improve generation prompt from feedback
+│   ├── hintbook-generator-agent.md          #   search web → generate hint page with real citations
+│   ├── hintbook-generator-grader-agent.md   #   fetch cited sources → verify every claim online
+│   ├── hintbook-generator-improver-agent.md #   improve generation prompt from grader feedback
 │   │
 │   │   # Assessment loop — native mode
 │   ├── runner-native.md           #   run assessment case as Claude
@@ -286,7 +292,7 @@ Wizard to add an assessment case. Asks for a case ID, the hint page ID to use (m
 | What | How |
 |---|---|
 | New document type | `/generate-hints "<doc_type>"` |
-| New assessment case | `/add-case assessment` |
+| New assessment case | `/add-case` |
 | New prompt target | Add `prompts/{target}/v1.md`, `rubrics/{target}/v1.md`, `cases/{target}/` |
 | Change quality threshold | Pass `--threshold N` to `/generate-hints` or edit `>= 80` in `run-loop.md` |
 | Change case sampling | Edit the 20/40/40 weights in `tools/sample.py` |
