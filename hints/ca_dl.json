@@ -1,0 +1,154 @@
+{
+  "id": "ca_dl",
+  "title": "California Driver License / ID Card",
+  "subtitle": "Generations 2009–present (Gen 3 / Real ID compliant)",
+  "sources": ["AAMVA DL/ID Card Design Standard 2020", "CA DMV Form DL 44", "REAL ID Act 2005"],
+  "sections": [
+    {
+      "id": "S1",
+      "title": "Generation & Variant Identification",
+      "hints": [
+        ["S1.1", "Does the card bear the gold REAL ID star in the upper-right corner?", "Required for post-2018 Real ID compliant cards", "YES"],
+        ["S1.2", "Is the card orientation horizontal (landscape)?", "All CA DL/IDs since 2009 are horizontal", "YES"],
+        ["S1.3", "Is the card format ID-1 (CR-80, 85.6 × 54 mm)?", null, "YES"],
+        ["S1.4", "Does the card use the 'Bear Republic' Gen 3 design with the poppy-field background?", "Gen 3 introduced 2011; earlier cards have a lighter gradient", "CONTEXT"]
+      ]
+    },
+    {
+      "id": "S2",
+      "title": "Header & Title Block",
+      "hints": [
+        ["S2.1", "Does the header read 'CALIFORNIA' in bold white uppercase letters on a dark blue band?", null, "YES"],
+        ["S2.2", "Does the sub-header read 'DRIVER LICENSE' or 'IDENTIFICATION CARD' in smaller white text directly below 'CALIFORNIA'?", null, "YES"],
+        ["S2.3", "Is the DMV bear logo (California grizzly bear) printed in gold/yellow on the left side of the header band?", null, "YES"],
+        ["S2.4", "Does the header band extend the full width of the card?", null, "YES"]
+      ]
+    },
+    {
+      "id": "S3",
+      "title": "Document Number",
+      "hints": [
+        ["S3.1", "Is the DL/ID number exactly 1 letter followed by 7 digits (e.g. A1234567)?", null, "YES"],
+        ["S3.2", "Is the document number printed in high-contrast black ink in the upper-left area below the header?", null, "YES"],
+        ["S3.3", "Is the document number repeated in the 1D or 2D barcode on the back?", "Field code DAQ in PDF417", "YES"],
+        ["S3.4", "Is the leading letter one of A–Z (excluding O and I which are avoided to prevent confusion)?", null, "YES"]
+      ]
+    },
+    {
+      "id": "S4",
+      "title": "Dates",
+      "hints": [
+        ["S4.1", "Are dates formatted MM/DD/YYYY on the front face?", null, "YES"],
+        ["S4.2", "Is the issue date (ISS) printed and within a plausible window (not future-dated)?", null, "YES"],
+        ["S4.3", "Is the expiry date 5 years from the birth month/year for standard licenses?", "Under-21 cards expire on 21st birthday; over-70 cards may expire sooner", "YES"],
+        ["S4.4", "Is the date of birth printed in the standard position (labeled 'DOB' or '4b')?", null, "YES"],
+        ["S4.5", "Does the expiry date in the barcode (DBA) match the expiry printed on the front?", "PDF417 field DBA, format CCYYMMDD", "YES"]
+      ]
+    },
+    {
+      "id": "S5",
+      "title": "Physical Descriptors",
+      "hints": [
+        ["S5.1", "Is the last name printed in all-caps immediately below the DL number?", null, "YES"],
+        ["S5.2", "Is the first/middle name printed on a second name line in mixed case or caps?", null, "YES"],
+        ["S5.3", "Is the address block 2–3 lines with city, state abbreviation 'CA', and ZIP code?", null, "YES"],
+        ["S5.4", "Is eye color abbreviated to 3 letters (BLU, BRN, GRN, HZL, GRY, BLK, MAR, PNK, DIC)?", null, "YES"],
+        ["S5.5", "Is height expressed as feet-inches in format X'XX\" (e.g. 5'10\")?", null, "YES"],
+        ["S5.6", "Are sex codes M (Male), F (Female), or X (Nonbinary)?", "X added 2019", "YES"]
+      ]
+    },
+    {
+      "id": "S6",
+      "title": "Photo & Signature",
+      "hints": [
+        ["S6.1", "Is the photo positioned in the lower-left quadrant of the front face?", null, "YES"],
+        ["S6.2", "Does the photo have a light blue or white ghost image ghost-printed behind the main photo?", "Ghost image is a security feature; absence is suspicious", "YES"],
+        ["S6.3", "Is the signature printed in the black ink band beneath the photo?", null, "YES"],
+        ["S6.4", "Is the photo color with a plain light background?", null, "YES"],
+        ["S6.5", "Does the photo show the cardholder from the shoulders up, facing forward?", null, "YES"]
+      ]
+    },
+    {
+      "id": "S7",
+      "title": "Visual Security Features",
+      "hints": [
+        ["S7.1", "Is there a laser-engraved ghost image or secondary portrait on the card?", null, "YES"],
+        ["S7.2", "Does the card have a tactile laser perforation pattern (laser-perforated state outline or star)?", "Feel the card under light — tiny holes form CA outline", "YES"],
+        ["S7.3", "Is there a polycarbonate core (card is rigid and does not flex like a PVC card)?", null, "YES"],
+        ["S7.4", "Is there a color-shifting ink (OVI) or holographic overlay visible at an angle?", null, "YES"],
+        ["S7.5", "Does the card background feature fine-line guilloche printing that is difficult to photocopy?", null, "YES"],
+        ["S7.6", "Is microprint visible along the perimeter or within the body of the card at 10× magnification?", null, "YES"]
+      ]
+    },
+    {
+      "id": "S8",
+      "title": "UV / Fluorescent Features",
+      "hints": [
+        ["S8.1", "Under UV (365 nm), does the bear logo or background pattern fluoresce?", "Genuine CA DLs show UV-reactive ink patterns not visible under white light", "YES"],
+        ["S8.2", "Under UV, is the CA state seal visible as a latent image?", null, "YES"],
+        ["S8.3", "Under UV, do the card edges or substrate fluoresce differently from the printed areas?", null, "YES"]
+      ]
+    },
+    {
+      "id": "S9",
+      "title": "Back — Layout",
+      "hints": [
+        ["S9.1", "Is the back of the card dominated by a large PDF417 barcode in the lower portion?", null, "YES"],
+        ["S9.2", "Is there a 1D Code 39 barcode (or magnetic stripe) on the back for legacy readers?", "Gen 3 removed mag stripe; Gen 2 has it", "CONTEXT"],
+        ["S9.3", "Is the card number repeated in human-readable text above the barcode on the back?", null, "YES"],
+        ["S9.4", "Is there an 'END' string marking the end of the PDF417 data?", null, "YES"]
+      ]
+    },
+    {
+      "id": "S10",
+      "title": "Back — Barcode Encoding",
+      "hints": [
+        ["S10.1", "Does the PDF417 barcode decode without error?", "CRC errors indicate data tampering", "YES"],
+        ["S10.2", "Is the file type header '@\\n\\x1e\\rANSI ' present at the start of barcode data?", null, "YES"],
+        ["S10.3", "Does the IIN (Issuer Identification Number) match California's IIN '636014'?", "Field DCS: first 6 digits", "YES"],
+        ["S10.4", "Does the AAMVAVersion field indicate version 08 or later for Gen 3 cards?", null, "YES"]
+      ]
+    },
+    {
+      "id": "S11",
+      "title": "Under-21 / Senior Indicators",
+      "hints": [
+        ["S11.1", "If the cardholder is under 21, is the card issued in vertical (portrait) orientation?", "Vertical format for under-21 is a CA requirement", "YES"],
+        ["S11.2", "If under 21, does the header band read 'UNDER 21 UNTIL MM/DD/YYYY'?", null, "YES"],
+        ["S11.3", "If the card is vertical, does it use red/orange accent colors rather than the standard blue?", null, "YES"]
+      ]
+    },
+    {
+      "id": "S12",
+      "title": "Endorsements & Restrictions",
+      "hints": [
+        ["S12.1", "Are endorsement codes (H, N, P, S, T, X) present only for commercial licenses (Class A/B)?", null, "YES"],
+        ["S12.2", "Are restriction codes (B, C, D, E, F, G, H, I, J, K, L, M, N) printed legibly?", null, "YES"],
+        ["S12.3", "Is the license class (A, B, C, M1, M2) printed clearly and matching the class field in the barcode (DCT)?", null, "YES"]
+      ]
+    },
+    {
+      "id": "S13",
+      "title": "REAL ID Compliance Markers",
+      "hints": [
+        ["S13.1", "Is the REAL ID star gold/yellow and positioned in the upper-right corner within 0.5 cm of the card edge?", null, "YES"],
+        ["S13.2", "Is the full legal name (not abbreviated) printed on the face?", "REAL ID requires full legal name", "YES"],
+        ["S13.3", "Are the words 'FEDERAL LIMITS APPLY' absent (present only on non-REAL-ID cards)?", null, "YES"]
+      ]
+    },
+    {
+      "id": "S14",
+      "title": "Cross-Field Consistency",
+      "hints": [
+        ["S14.1", "Does the last name in barcode field DCS match the last name printed on the front?", "PDF417 DCS = family name", "YES"],
+        ["S14.2", "Does the first name in barcode field DAC match the first name printed on the front?", "PDF417 DAC = given name", "YES"],
+        ["S14.3", "Does the date of birth in barcode field DBB (CCYYMMDD) match the DOB printed on the front?", null, "YES"],
+        ["S14.4", "Does the expiry date in barcode field DBA match the expiry date on the front?", null, "YES"],
+        ["S14.5", "Does the document number in barcode field DAQ match the DL number on the front?", null, "YES"],
+        ["S14.6", "Does the address in barcode fields DAG/DAI/DAJ/DAK match the address on the front?", "DAG=street, DAI=city, DAJ=state, DAK=ZIP", "YES"],
+        ["S14.7", "Does the sex/gender in barcode field DBC (1=M, 2=F, 9=X) match the SEX field on the front?", null, "YES"],
+        ["S14.8", "Does the eye color in barcode field DAY (3-letter code) match the EYE field on the front?", null, "YES"]
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+[project]
+name = "hintbook-eval-cc"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.52.0",
+    "httpx>=0.27.0",
+    "pillow>=10.4.0",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tools*"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,15 @@
+{
+  "case_id": "us-passport-gen",
+  "target": "generation",
+  "enabled": true,
+  "description": "Generate a hint page for the US Passport (current 2021 booklet design)",
+  "tags": ["us_passport", "federal_id", "mrz", "travel_document"],
+  "doc_type": "United States Passport Book — current design (2021–present), 52-page navy blue booklet, MRZ on biographic data page, e-passport chip, national park imagery",
+  "ground_truth": {
+    "label": "genuine",
+    "verdict": "APPEARS_LEGITIMATE",
+    "expected_sections_min": 8,
+    "expected_hints_min": 50,
+    "expected_cross_field_min": 6
+  }
+}

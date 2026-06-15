@@ -1,0 +1,15 @@
+{
+  "case_id": "us-passport-card-gen",
+  "target": "generation",
+  "enabled": true,
+  "description": "Generate a hint page for the US Passport Card (credit-card format)",
+  "tags": ["us_passport_card", "federal_id", "rfid", "travel_document"],
+  "doc_type": "United States Passport Card — current design (2018–present), ID-1 card format, RFID chip, Joshua Tree National Park imagery, PASS ID on back",
+  "ground_truth": {
+    "label": "genuine",
+    "verdict": "APPEARS_LEGITIMATE",
+    "expected_sections_min": 8,
+    "expected_hints_min": 40,
+    "expected_cross_field_min": 4
+  }
+}
